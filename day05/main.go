@@ -22,8 +22,14 @@ type ResourceMap struct {
 	Ranges []MapRange
 }
 
-func problem(lines []string, partTwo bool) (int, error) {
-	seeds, maps := readMaps(lines, partTwo)
+type SeedRange struct {
+	Start  int
+	Length int
+	End    int
+}
+
+func partOne(lines []string) (int, error) {
+	seeds, maps := readMaps(lines, false)
 
 	order := []string{
 		"seed", "soil", "fertilizer", "water", "light", "temperature", "humidity", "location",
@@ -31,7 +37,7 @@ func problem(lines []string, partTwo bool) (int, error) {
 
 	lowest := math.MaxInt
 	for _, seed := range seeds {
-		val := seed
+		val := seed.Start
 		oi := 0
 		foundLocation := false
 		for !foundLocation {
@@ -62,8 +68,8 @@ func problem(lines []string, partTwo bool) (int, error) {
 	return lowest, nil
 }
 
-func readMaps(lines []string, partTwo bool) ([]int, []ResourceMap) {
-	seeds := make([]int, 0)
+func readMaps(lines []string, partTwo bool) ([]SeedRange, []ResourceMap) {
+	seedRanges := make([]SeedRange, 0)
 	resourcemaps := make([]ResourceMap, 0)
 
 	var currentMap *ResourceMap
@@ -85,13 +91,23 @@ func readMaps(lines []string, partTwo bool) ([]int, []ResourceMap) {
 			if partTwo {
 				for i := 0; i < len(tmpseeds); i++ {
 					sr := tmpseeds[i+1]
-					for j := tmpseeds[i]; j < tmpseeds[i]+sr; j++ {
-						seeds = append(seeds, j)
+					seedRange := SeedRange{
+						Start:  tmpseeds[i],
+						Length: sr,
+						End:    tmpseeds[i] + sr,
 					}
+					seedRanges = append(seedRanges, seedRange)
 					i++
 				}
 			} else {
-				seeds = tmpseeds
+				for _, sv := range tmpseeds {
+					sr := SeedRange{
+						Start:  sv,
+						Length: 1,
+						End:    sv,
+					}
+					seedRanges = append(seedRanges, sr)
+				}
 			}
 			continue
 		}
@@ -132,7 +148,47 @@ func readMaps(lines []string, partTwo bool) ([]int, []ResourceMap) {
 	//		fmt.Printf("%v,%v,%v,%v\n", v2.DestStart, v2.SourceStart, v2.DestEnd, v2.SourceEnd)
 	//	}
 	//}
-	return seeds, resourcemaps
+	return seedRanges, resourcemaps
+}
+
+func partTwo(lines []string) (int, error) {
+	seeds, maps := readMaps(lines, true)
+
+	order := []string{
+		"seed", "soil", "fertilizer", "water", "light", "temperature", "humidity", "location",
+	}
+
+	lowest := math.MaxInt
+	for _, seed := range seeds {
+		val := seed.Start
+		oi := 0
+		foundLocation := false
+		for !foundLocation {
+			// find the next map
+			var nm ResourceMap
+			for _, m := range maps {
+				if m.Source == order[oi] {
+					nm = m
+				}
+			}
+
+			for _, r := range nm.Ranges {
+				if val >= r.SourceStart && val <= r.SourceEnd {
+					valdif := val - r.SourceStart
+					val = r.DestStart + valdif
+					break
+				}
+			}
+			oi++
+			if nm.Dest == "location" {
+				foundLocation = true
+			}
+		}
+		if val < lowest {
+			lowest = val
+		}
+	}
+	return lowest, nil
 }
 
 func main() {
@@ -143,7 +199,7 @@ func main() {
 		return
 	}
 
-	ans, err := problem(lines, true)
+	ans, err := partOne(lines)
 	fmt.Printf("Part one: %v\n", ans)
 
 }
