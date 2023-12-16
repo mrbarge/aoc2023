@@ -7,6 +7,13 @@ type Coord struct {
 	Y int
 }
 
+const (
+	NORTH = iota
+	EAST  = iota
+	SOUTH = iota
+	WEST  = iota
+)
+
 // Return all coordinate neighbours
 func (c Coord) GetNeighbours(diagonal bool) []Coord {
 	ret := []Coord{
@@ -24,6 +31,21 @@ func (c Coord) GetNeighbours(diagonal bool) []Coord {
 		}...)
 	}
 	return ret
+}
+
+func (c Coord) Move(dir int) Coord {
+	r := c
+	switch dir {
+	case NORTH:
+		r.Y -= 1
+	case EAST:
+		r.X += 1
+	case WEST:
+		r.X -= 1
+	case SOUTH:
+		r.Y += 1
+	}
+	return r
 }
 
 func (c Coord) GetOrderedSquare() []Coord {
@@ -69,5 +91,5 @@ func (c Coord) GetNeighboursPos(diagonal bool) []Coord {
 }
 
 func ManhattanDistance(c1 Coord, c2 Coord) int {
-	return int(math.Abs(float64(c1.X - c2.X)) + math.Abs(float64(c1.Y - c2.Y)))
+	return int(math.Abs(float64(c1.X-c2.X)) + math.Abs(float64(c1.Y-c2.Y)))
 }
