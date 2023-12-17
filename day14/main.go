@@ -4,31 +4,33 @@ import (
 	"fmt"
 	"github.com/mrbarge/aoc2023/helper"
 	"os"
-	"strconv"
 )
 
-var seenIt map[string]bool
+var seenIt map[string]int
 
 func problem(grid []string, partTwo bool) (int, error) {
-	seenIt = make(map[string]bool)
+	seenIt = make(map[string]int)
 	ans := 0
 	if partTwo {
 		converted := convert(grid)
-		var seen1, seen2, seen3, seen4 bool
-		for i := 0; i < 1000000000; i++ {
-			converted, seen1 = cycle(converted, 0, i)
-			converted, seen2 = cycle(converted, 3, i)
-			converted, seen3 = cycle(converted, 2, i)
-			converted, seen4 = cycle(converted, 1, i)
-			if seen1 || seen2 || seen3 || seen4 {
-				fmt.Printf("LOAD: %v\n", calcLoad(converted))
-				//break
+		for i := 1; i <= 1000000000; i++ {
+			converted = cycle(converted, 0, i)
+			converted = cycle(converted, 3, i)
+			converted = cycle(converted, 2, i)
+			converted = cycle(converted, 1, i)
+			key := makeit(converted, 1)
+			if _, ok := seenIt[key]; ok {
+				if (1000000000-i)%(seenIt[key]-i) == 0 {
+					break
+				}
+			} else {
+				seenIt[key] = i
 			}
 		}
 		ans = calcLoad(converted)
 	} else {
 		converted := convert(grid)
-		converted, _ = cycle(converted, 0, 0)
+		converted = cycle(converted, 0, 0)
 		ans = calcLoad(converted)
 	}
 
@@ -36,7 +38,7 @@ func problem(grid []string, partTwo bool) (int, error) {
 }
 
 func makeit(grid [][]string, dir int) string {
-	r := strconv.Itoa(dir) + "-"
+	r := ""
 	for _, row := range grid {
 		for _, v := range row {
 			r += v
@@ -79,15 +81,7 @@ func printit(r [][]string) {
 	fmt.Printf("\n")
 }
 
-func cycle(r [][]string, dir int, cycle int) ([][]string, bool) {
-	key := makeit(r, dir)
-	if _, ok := seenIt[key]; ok {
-		fmt.Printf("Seen it! Cycle %v\n", cycle)
-		return r, true
-	} else {
-		seenIt[key] = true
-	}
-
+func cycle(r [][]string, dir int, cycle int) [][]string {
 	if dir == 0 {
 		// north
 		for col := 0; col < len(r[0]); col++ {
@@ -170,7 +164,7 @@ func cycle(r [][]string, dir int, cycle int) ([][]string, bool) {
 		}
 	}
 
-	return r, false
+	return r
 }
 
 func main() {
