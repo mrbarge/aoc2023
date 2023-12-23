@@ -36,6 +36,18 @@ func (c Coord) GetNeighbours(diagonal bool) []Coord {
 	return ret
 }
 
+func (c Coord) GetSafeNeighbours(diagonal bool, xlen int, ylen int) []Coord {
+	n := c.GetNeighbours(diagonal)
+	r := make([]Coord, 0)
+	for _, neighbour := range n {
+		if neighbour.X < 0 || neighbour.X >= xlen || neighbour.Y < 0 || neighbour.Y >= ylen {
+			continue
+		}
+		r = append(r, neighbour)
+	}
+	return r
+}
+
 func (c Coord) Move(dir int) Coord {
 	r := c
 	switch dir {
