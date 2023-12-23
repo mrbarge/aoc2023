@@ -3,6 +3,8 @@ package helper
 import (
 	"fmt"
 	"sort"
+	"strconv"
+	"strings"
 )
 
 type Coord3D struct {
@@ -120,4 +122,13 @@ func (c Coord3D) AdjNeighbours() []Coord3D {
 		{X: c.X, Y: c.Y, Z: c.Z + 1},
 		{X: c.X, Y: c.Y, Z: c.Z - 1},
 	}
+}
+
+func ReadCoord3D(s string) Coord3D {
+	r := Coord3D{}
+	elems := strings.Split(s, ",")
+	r.X, _ = strconv.Atoi(elems[0])
+	r.Y, _ = strconv.Atoi(elems[1])
+	r.Z, _ = strconv.Atoi(elems[2])
+	return r
 }

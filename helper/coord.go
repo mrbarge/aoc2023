@@ -1,6 +1,9 @@
 package helper
 
-import "math"
+import (
+	"fmt"
+	"math"
+)
 
 type Coord struct {
 	X int
@@ -88,6 +91,10 @@ func (c Coord) GetNeighboursPos(diagonal bool) []Coord {
 		}
 	}
 	return ret
+}
+
+func (c Coord) ToString() string {
+	return fmt.Sprintf("%v,%v", c.X, c.Y)
 }
 
 func ManhattanDistance(c1 Coord, c2 Coord) int {
