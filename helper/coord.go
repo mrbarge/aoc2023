@@ -48,6 +48,20 @@ func (c Coord) GetSafeNeighbours(diagonal bool, xlen int, ylen int) []Coord {
 	return r
 }
 
+func (c Coord) MoveDirection(dir int) Coord {
+	switch dir {
+	case NORTH:
+		return Coord{X: c.X, Y: c.Y - 1}
+	case EAST:
+		return Coord{X: c.X + 1, Y: c.Y}
+	case WEST:
+		return Coord{X: c.X - 1, Y: c.Y}
+	case SOUTH:
+		return Coord{X: c.X, Y: c.Y + 1}
+	}
+	return c
+}
+
 func (c Coord) Move(dir int) Coord {
 	r := c
 	switch dir {
