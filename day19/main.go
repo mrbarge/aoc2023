@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/mrbarge/aoc2023/helper"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -21,7 +22,7 @@ type Condition struct {
 	dest       string
 }
 
-func problem(input []string, partTwo bool) (int, error) {
+func problem1(input []string) (int, error) {
 	rules := readBlock(input, false)
 	data := readBlock(input, true)
 
@@ -40,6 +41,66 @@ func problem(input []string, partTwo bool) (int, error) {
 	return ans, nil
 }
 
+func problem2(input []string) (int, error) {
+	rules := readBlock(input, false)
+	//data := readBlock(input, true)
+
+	r := readRules(rules)
+	//d := readData(data)
+
+	ans := 0
+	minrange, maxrange := findRanges(r)
+
+	for xi, xv := range minrange["x"] {
+		for mi, mv := range minrange["m"] {
+			for ai, av := range minrange["a"] {
+				for si, sv := range minrange["s"] {
+					data := map[string]int{
+						"x": xv, "m": mv, "a": av, "s": sv,
+					}
+					accept := process(data, r)
+					if accept {
+						ans += (maxrange["x"][xi] - xv + 1) *
+							(maxrange["m"][mi] - mv + 1) *
+							(maxrange["a"][ai] - av + 1) *
+							(maxrange["s"][si] - sv + 1)
+					}
+
+				}
+			}
+		}
+	}
+	fmt.Printf("%v\n", minrange)
+	fmt.Printf("%v\n", maxrange)
+	return ans, nil
+}
+
+func findRanges(rules []Rule) (map[string][]int, map[string][]int) {
+	rmin := make(map[string][]int)
+	rmax := make(map[string][]int)
+
+	for _, rule := range rules {
+		for _, condition := range rule.condition {
+			if condition.comparator == ">" {
+				rmin[condition.subject] = append(rmin[condition.subject], condition.value+1)
+				rmax[condition.subject] = append(rmax[condition.subject], condition.value)
+			} else if condition.comparator == "<" {
+				rmin[condition.subject] = append(rmin[condition.subject], condition.value)
+				rmax[condition.subject] = append(rmax[condition.subject], condition.value-1)
+			}
+		}
+	}
+	for k := range rmin {
+		rmin[k] = append(rmin[k], 1)
+		sort.Ints(rmin[k])
+	}
+	for k := range rmin {
+		rmax[k] = append(rmax[k], 4000)
+		sort.Ints(rmax[k])
+	}
+	return rmin, rmax
+}
+
 func (c Condition) test(data map[string]int) bool {
 	if _, ok := data[c.subject]; !ok {
 		return false
@@ -51,6 +112,8 @@ func (c Condition) test(data map[string]int) bool {
 		return testval < c.value
 	}
 }
+
+// p2: https://syltaen.com/advent-of-code/?year=2023&day=19
 
 func process(data map[string]int, rules []Rule) bool {
 	nextRule := "in"
@@ -163,10 +226,10 @@ func main() {
 		return
 	}
 
-	ans, err := problem(lines, false)
+	ans, err := problem1(lines)
 	fmt.Printf("Part one: %v\n", ans)
 
-	//ans, err = problem(lines, true)
-	//fmt.Printf("Part two: %v\n", ans)
+	ans, err = problem2(lines)
+	fmt.Printf("Part two: %v\n", ans)
 
 }
