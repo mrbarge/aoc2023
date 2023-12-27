@@ -5,12 +5,14 @@ import (
 	"github.com/mrbarge/aoc2023/helper"
 	"math"
 	"os"
+	"slices"
 	"sort"
 	"strings"
 )
 
 type Blocks []Block
 type Block struct {
+	id     int
 	coords []helper.Coord3D
 }
 
@@ -47,6 +49,7 @@ func (b Block) Grounded() bool {
 
 func (b Block) Lower() Block {
 	nb := Block{
+		id:     b.id,
 		coords: make([]helper.Coord3D, 0),
 	}
 	for _, c := range b.coords {
@@ -75,7 +78,7 @@ func (b Block) CanLower(blocks Blocks) bool {
 
 func (b Block) Parents(blocks Blocks) []int {
 	r := make([]int, 0)
-	for i, block := range blocks {
+	for _, block := range blocks {
 		if block.coords[0].V == b.coords[0].V {
 			// ignore selfblock
 			continue
@@ -83,7 +86,9 @@ func (b Block) Parents(blocks Blocks) []int {
 		for _, coord := range block.coords {
 			for _, bc := range b.coords {
 				if bc.X == coord.X && bc.Y == coord.Y && bc.Z+1 == coord.Z {
-					r = append(r, i)
+					if !slices.Contains(r, block.coords[0].V) {
+						r = append(r, block.coords[0].V)
+					}
 				}
 			}
 		}
@@ -93,7 +98,7 @@ func (b Block) Parents(blocks Blocks) []int {
 
 func (b Block) Children(blocks Blocks) []int {
 	r := make([]int, 0)
-	for i, block := range blocks {
+	for _, block := range blocks {
 		if block.coords[0].V == b.coords[0].V {
 			// ignore selfblock
 			continue
@@ -101,7 +106,9 @@ func (b Block) Children(blocks Blocks) []int {
 		for _, coord := range block.coords {
 			for _, bc := range b.coords {
 				if bc.X == coord.X && bc.Y == coord.Y && bc.Z-1 == coord.Z {
-					r = append(r, i)
+					if !slices.Contains(r, block.coords[0].V) {
+						r = append(r, block.coords[0].V)
+					}
 				}
 			}
 		}
@@ -109,9 +116,10 @@ func (b Block) Children(blocks Blocks) []int {
 	return r
 }
 
-func readBlock(s string) Block {
+func readBlock(s string, id int) Block {
 	var b Block
 	b.coords = make([]helper.Coord3D, 0)
+	b.id = id
 	fromCoord := helper.ReadCoord3D(strings.Split(s, "~")[0])
 	toCoord := helper.ReadCoord3D(strings.Split(s, "~")[1])
 
@@ -141,17 +149,61 @@ func (b Block) CanDisintegrate(blocks Blocks) bool {
 	return true
 }
 
-func problem(input []string, partTwo bool) (int, error) {
+func (b Block) CountParents(blocks Blocks) int {
+	queue := make([]Block, 0)
+
+	seen := make(map[int]bool)
+
+	sp := b.Parents(blocks)
+	for _, v := range sp {
+		queue = append(queue, blocks[v])
+		seen[blocks[v].id] = true
+	}
+
+	np := 0
+	for len(queue) > 0 {
+		p := queue[0]
+		queue = queue[1:]
+
+		pp := p.Parents(blocks)
+		for _, bp := range pp {
+			pblock := blocks[bp]
+			if _, ok := seen[pblock.id]; !ok {
+				queue = append(queue, pblock)
+				seen[pblock.id] = true
+			}
+		}
+		np++
+	}
+
+	return np
+}
+
+func partone(input []string) (int, error) {
 	blocks := readData(input)
 	sort.Sort(blocks)
 	newblocks := fallBricks(blocks)
 	ans := 0
-	for i := len(newblocks) - 1; i >= 0; i-- {
-		fmt.Printf("%v\n", newblocks[i])
+	for _, nb := range newblocks {
+		fmt.Printf("Block %v: %v\n", nb.id, nb.coords)
 	}
 	for _, block := range newblocks {
 		if block.CanDisintegrate(newblocks) {
+			fmt.Printf("Block %v can disintegrate\n", block.coords[0].V)
 			ans++
+		}
+	}
+	return ans, nil
+}
+
+func parttwo(input []string) (int, error) {
+	blocks := readData(input)
+	sort.Sort(blocks)
+	newblocks := fallBricks(blocks)
+	ans := 0
+	for _, block := range newblocks {
+		if !block.CanDisintegrate(newblocks) {
+			ans += block.CountParents(newblocks)
 		}
 	}
 	return ans, nil
@@ -160,7 +212,7 @@ func problem(input []string, partTwo bool) (int, error) {
 func readData(input []string) Blocks {
 	blocks := make([]Block, 0)
 	for i, line := range input {
-		b := readBlock(line)
+		b := readBlock(line, i)
 		for j, _ := range b.coords {
 			b.coords[j].V = i
 		}
@@ -205,10 +257,10 @@ func main() {
 		return
 	}
 
-	ans, err := problem(lines, false)
+	ans, err := partone(lines)
 	fmt.Printf("Part one: %v\n", ans)
 
-	//ans, err = problem(lines, true)
-	//fmt.Printf("Part two: %v\n", ans)
+	ans, err = parttwo(lines)
+	fmt.Printf("Part two: %v\n", ans)
 
 }
